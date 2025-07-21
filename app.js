@@ -14,13 +14,18 @@ app.use("/uploads", express.static("uploads"));
 const UserAuth = require("./routes/loginRoutes");
 app.use("/user/Auth", UserAuth);
 
+// donation routes
+const Donation = require("./routes/donationRoutes");
+app.use("/donation", Donation);
+
+
 // connection to the database
 mongoose
   .connect(process.env.MONGO_URI)
   .then(() => console.log("mongodb connected"))
   .catch((err) => console.log("mongodb connected error", err));
 
-const PORT = 3001;
+const PORT = 3000;
 app.listen(PORT, () => {
   console.log(`server running on port ${PORT}`);
 });

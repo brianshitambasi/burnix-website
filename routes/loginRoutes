@@ -4,6 +4,11 @@ const loginController=require("../controller/loginController")
 
 
 router.post('/register',loginController.createUser)
+router.post('/',loginController.loginUser)
+
+
+
+
 
 
 
