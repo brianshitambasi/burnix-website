@@ -30,7 +30,7 @@ const authorizeRoles = (...allowedRoles) => {
         .status(403)
         .json({ error: "You are not authorized to access this route" });
     }
-    next();
+  
   };
 };
 module.exports = { auth, authorizeRoles };
