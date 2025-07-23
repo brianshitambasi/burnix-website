@@ -15,7 +15,7 @@ const UserAuth = require("./routes/loginRoutes");
 app.use("/user/Auth", UserAuth);
 
 // donation routes
-const Donation = require("./routes/donationRoutes");
+const Donation = require("./routes/loginRoutes");
 app.use("/donation", Donation);
 
 

@@ -3,8 +3,11 @@ const router=express.Router()
 const loginController=require("../controller/loginController")
 
 
-router.post('/register',loginController.createUser)
-router.post('/',loginController.loginUser)
+router.post('/register',loginController.registerDonor)
+router.post('/login',loginController.loginDonor)
+
+
+
 
 
 

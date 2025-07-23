@@ -2,93 +2,76 @@ const mongoose = require("mongoose");
 const { User } = require("../models/models");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
+const { response } = require("express");
 
-exports.createUser = async (req, res) => {
-  try {
-    const user = await new User(req.body).save();
-    res.status(201).json(user);
-  } catch (error) {
-    res.status(400).json({ error: error.message });
+// register logic
+
+exports.registerDonor = async (req, res) => {
+  if (secretkey !==process.env.secretkey){
+    return res.status(401).json({ message: "Unauthorized account creation" });
   }
-};
 
-exports.getUsers = async (req, res) => {
-  try {
-    const users = await User.find();
-    res.status(200).json(users);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
+  // check if the user exists
+  const existingUser = await User.findOne({ email });
+  if (existingUser) {
+    return res.status(400).json({ message: "email already exists" });
   }
-};
+  // hash the password
+  const hashedPassword = await bcrypt.hash(password, 10);
+  // create a new user
+  const user = new User({
+    name,
+    email,
+    password: hashedPassword,
+    address,
+    role: "donor",
+  });
+  // save the user
+  await user.save();
+  // return a success message
+  res.status(201).json({ message: "User created successfully" });
+  };
 
-exports.getUserById = async (req, res) => {
-  try {
-    const user = await User.findById(req.params.id);
-    if (!user) return res.status(404).json({ error: "User not found" });
-    res.status(200).json(user);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-};
+  // login logic
+  exports.loginDonor = async (req, res) => {
+    const {email,password}=req.body;
 
-exports.updateUser = async (req, res) => {
-  try {
-    const user = await User.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,
-      runValidators: true,
-    });
-    if (!user) return res.status(404).json({ error: "User not found" });
-    res.status(200).json(user);
-  } catch (error) {
-    res.status(400).json({ error: error.message });
-  }
-};
-
-exports.deleteUser = async (req, res) => {
-  try {
-    const user = await User.findByIdAndDelete(req.params.id);
-    if (!user) return res.status(404).json({ error: "User not found" });
-    res.status(200).json({ message: "User deleted" });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-};
-
-exports.loginUser = async (req, res) => {
-  try {
-    const { email, password } = req.body;
-
-    // Find user by email
-    const user = await User.findOne({ email });
-    if (!user) {
-      return res.status(401).json({ error: "Invalid credentials mail" });
+    if(!User){
+      return res.status(404).json({ message: "User not found" });
     }
-
-    // check if the password is correct
-    const isValidPassword = await bcrypt.compare(password, user.password);
-    if (!isValidPassword) {
-      return res.status(401).json({ message: "invalid password" });
-    }
-
-    // Generate JWT token
-    const token = jwt.sign(
-      { userId: user._id, email: user.email },
-      process.env.JWT_SECRET || "your_jwt_secret_key",
-
-      { expiresIn: "1h" }
-      // Token expires in 1 hour
-    );
-    console.log(token);
-    res.json({
-      message: "login successful",
-      token,
-      user: {
-        id: user._id,
-        email: user.email,
-        // Add other user fields as needed, excluding sensitive data like password
-      },
-    });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
+    // check if the user is active
+    if (!User.active) {
+      return res.status(400).json({ message: "User is not active" });
+      }
+      // check if the password is correct
+      const isValidPassword = await bcrypt.compare(password, User.password);
+      if (!isValidPassword) {
+        return res.status(400).json({ message: "Invalid password" });
+        }
+        // generate a token
+        const token = jwt.sign({ userId: User._id,role:User.role }, 
+          process.env.JWT_SECRET, {
+          expiresIn: "1h",
+          }
+        
+        );
+        // return the token
+        response.json({
+          message: "login successful",
+          token,
+          user: {
+            name: User.name,
+            email: User.email,
+            address: User.address,
+            role: User.role,
+          },
+        });
   }
-};
+
+
+
+
+
+
+
+
