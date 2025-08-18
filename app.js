@@ -13,6 +13,7 @@ app.use("/uploads",express.static("uploads"))
 
 
 // login routes
+
 //login routes
 const UserAuth=require('./routes/loginRoutes')
 app.use('/user/Auth',UserAuth)
@@ -20,6 +21,10 @@ app.use('/user/Auth',UserAuth)
 // donation routes
 const DonationRoutes = require("./routes/donationRoutes");
 app.use("/donation", DonationRoutes);
+
+// donation dash
+const donorDash = require("./routes/donorDashRoute");
+app.use("/donor/dash", donorDash);
 
 // request routes
 const RequestRoutes = require("./routes/requestRoutes");

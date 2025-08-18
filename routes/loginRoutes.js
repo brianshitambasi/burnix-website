@@ -4,8 +4,8 @@ const loginController=require("../controller/loginController")
 
 
 // Register route
-router.post("/register", loginController.registerDonor);
-router.post("/login", loginController.loginDonor);
+router.post("/register", loginController.registerUser);
+router.post("/login", loginController.loginUser);
 
 
 

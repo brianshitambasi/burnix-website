@@ -1,63 +1,77 @@
-const mongoose = require("mongoose");
-const Request = mongoose.model("Request");
+const { Request } = require("../models/models");
 
-const requestController = {
-  async createRequest(req, res) {
-    try {
-      if (!req.body || Object.keys(req.body).length === 0) {
-        return res.status(400).json({ error: "Request body cannot be empty" });
+// requestController.js
+  // Create request (only beneficiary)
+  exports.createRequest=async (req, res) =>  {
+    try { 
+      if (req.user.role !== "beneficiary") {
+        return res.status(403).json({ error: "Only beneficiaries can create requests" });
       }
-      const request = await Request.create(req.body);
+
+      const request = await Request.create({
+        ...req.body,
+        beneficiary: req.user.userId, // ✅ correct field name
+      });
+
       res.status(201).json(request);
     } catch (error) {
-      res.status(400).json({ error: error.message });
+      console.error("Error creating request:", error);
+      res.status(500).json({ error: error.message });
     }
-  },
+  }
 
-  async getRequests(req, res) {
+
+  // Get all requests
+  exports.getRequests=async (req, res) =>  {
     try {
       const requests = await Request.find()
-        .populate("beneficiaryId", "name email");
+        .populate("beneficiary", "name email role")
+        .populate("donation", "type quantity description donor");
       res.status(200).json(requests);
     } catch (error) {
       res.status(500).json({ error: error.message });
     }
   },
 
-  async getRequestById(req, res) {
+  // Get single request
+  exports.getRequestById=async (req, res) =>  {
     try {
       const request = await Request.findById(req.params.id)
-        .populate("beneficiaryId", "name email");
-      if (!request) return res.status(404).json({ error: "Request not found" });
+        .populate("beneficiary", "name email role")
+        .populate("donation", "type quantity description donor");
+      if (!request) return res.json({ error: "Request not found" });
       res.status(200).json(request);
     } catch (error) {
       res.status(500).json({ error: error.message });
     }
-  },
+  }
 
-  async updateRequest(req, res) {
+  // Update request (only owner beneficiary)
+  exports.updateRequest=async (req, res) =>  {
     try {
-      const request = await Request.findByIdAndUpdate(
-        req.params.id,
+      const request = await Request.findOneAndUpdate(
+        { _id: req.params.id, beneficiary: req.user.userId }, // ✅ correct field
         req.body,
-        { new: true, runValidators: true, context: 'query' }
+        { new: true, runValidators: true, context: "query" }
       );
-      if (!request) return res.status(404).json({ error: "Request not found" });
+      if (!request) return res.json({ error: "Request not found or not authorized" });
       res.status(200).json(request);
     } catch (error) {
       res.status(500).json({ error: error.message });
     }
   },
 
-  async deleteRequest(req, res) {
+  // Delete request (only owner beneficiary)
+  exports.deleteRequest=async (req, res) =>  {
     try {
-      const request = await Request.findByIdAndDelete(req.params.id);
-      if (!request) return res.status(404).json({ error: "Request not found" });
-      res.status(204).send();
+      const request = await Request.findOneAndDelete({
+        _id: req.params.id,
+        beneficiary: req.user.userId, // ✅ correct field
+      });
+      if (!request) return res.json({ error: "Request not found or not authorized" });
+      res.json({ message: "Request deleted successfully" });
     } catch (error) {
       res.status(500).json({ error: error.message });
     }
-  },
-};
+  }
 
-module.exports = requestController;

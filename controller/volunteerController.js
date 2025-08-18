@@ -1,5 +1,5 @@
 const mongoose = require("mongoose");
-const VolunteerOpportunity = mongoose.model("VolunteerOpportunity");
+const VolunteerOpportunity = require('../models/models');
 
 const volunteerOpportunityController = {
   async createVolunteerOpportunity(req, res) {

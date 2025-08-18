@@ -1,68 +1,78 @@
-const mongoose = require("mongoose");
 const { User } = require("../models/models");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 
-exports.registerDonor = async (req, res) => {
+// ========================
+// Register User
+// ========================
+exports.registerUser = async (req, res) => {
   try {
-    const { name, email, password, address, secretkey } = req.body;
-    if (secretkey !== process.env.SECRET_KEY) {
-      return res.status(401).json({ message: "Unauthorized account creation" });
+    const { name, email, password, address, role } = req.body;
+
+    // Validate role
+    if (role && !["donor", "beneficiary", "volunteer"].includes(role)) {
+      return res.json({ message: "Invalid role" });
     }
+
     const existingUser = await User.findOne({ email });
     if (existingUser) {
-      return res.status(400).json({ message: "Email already exists" });
+      return res.json({ message: "Email already exists" });
     }
+
     const hashedPassword = await bcrypt.hash(password, 10);
+
     const user = new User({
       name,
       email,
       password: hashedPassword,
       address,
-      role: "donor",
-      active: true,
+      role: role || "beneficiary", // default = beneficiary
     });
+
     await user.save();
-    return res.status(201).json({ message: "User created successfully" });
+    return res.status(201).json({ message: "User registered successfully" });
   } catch (error) {
-    console.error("Error in registerDonor:", error);
-    return res
-      .status(500)
-      .json({ message: "Server error during registration" });
+    console.error("Error in registerUser:", error);
+    return res.status(500).json({ message: error.message });
   }
 };
 
-exports.loginDonor = async (req, res) => {
+// ========================
+// Login User
+// ========================
+exports.loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
     const user = await User.findOne({ email });
+
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
-    if (!user.active) {
-      return res.status(400).json({ message: "User is not active" });
-    }
+
     const isValidPassword = await bcrypt.compare(password, user.password);
     if (!isValidPassword) {
-      return res.status(400).json({ message: "Invalid password" });
+      return res.json({ message: "Invalid password" });
     }
+
     const token = jwt.sign(
       { userId: user._id, role: user.role },
       process.env.JWT_SECRET,
-      { expiresIn: "1h" }
+      { expiresIn: "12h" }
     );
+
     return res.status(200).json({
       message: "Login successful",
       token,
       user: {
+        id: user._id,
         name: user.name,
         email: user.email,
-        address: user.address,
+        address: user.address,  
         role: user.role,
       },
     });
   } catch (error) {
-    console.error("Error in loginDonor:", error);
+    console.error("Error in loginUser:", error);
     return res.status(500).json({ message: "Server error during login" });
   }
 };

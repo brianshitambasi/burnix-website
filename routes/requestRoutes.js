@@ -1,16 +1,22 @@
 const express = require("express");
 const router = express.Router();
 const requestController = require("../controller/requestConroller");
+const { auth, authorizeRoles } = require("../middleware/auth");
 
-// Create a new request
-router.post("/requests", requestController.createRequest);
+// Beneficiary creates request
+router.post("/", auth, requestController.createRequest);
+
 // Get all requests
-router.get("/requests", requestController.getRequests);
-// Get a single request by ID
-router.get("/requests/:id", requestController.getRequestById);
-// Update a request by ID
-router.put("/requests/:id", requestController.updateRequest);
-// Delete a request by ID
-router.delete("/requests/:id", requestController.deleteRequest);
+router.get("/", requestController.getRequests);
+
+// Get single request
+router.get("/:id", requestController.getRequestById);
+
+// Update request (beneficiary only)
+router.put("/:id", auth,authorizeRoles('beneficiary'), requestController.updateRequest);
+
+// Delete request (beneficiary only)
+router.delete("/:id", auth,authorizeRoles('beneficiary'), requestController.deleteRequest);
+
 
 module.exports = router;
