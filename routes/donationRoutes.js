@@ -1,15 +1,11 @@
 const express = require("express");
 const router = express.Router();
+const donanationController = require("../controller/donationController");
 
-const donationController = require("../controller/donationController");
+// Donor registration route
+router.post("/register", donanationController.registerDonor);
 
-// authentication middleware (if needed)
-// const { auth, authorizeRoles } = require("../middleware/auth");
-
-router.post("/donations", donationController.createDonation);
-router.get("/donations", donationController.getAllDonations);
-router.get("/donations/:id", donationController.getDonationById);
-router.put("/donations/:id", donationController.updateDonation);
-router.delete("/donations/:id", donationController.deleteDonation);
+// Donor login route
+router.post("/login", donanationController.loginDonor);
 
 module.exports = router;

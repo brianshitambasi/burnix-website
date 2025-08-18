@@ -1,15 +1,16 @@
 const express = require("express");
 const router = express.Router();
+const requestController = require("../controller/requestConroller");
 
-const requestController = require("../controller/requestController");
-
+// Create a new request
 router.post("/requests", requestController.createRequest);
-router.get("/requests", requestController.getAllRequests);
+// Get all requests
+router.get("/requests", requestController.getRequests);
+// Get a single request by ID
 router.get("/requests/:id", requestController.getRequestById);
+// Update a request by ID
 router.put("/requests/:id", requestController.updateRequest);
+// Delete a request by ID
 router.delete("/requests/:id", requestController.deleteRequest);
-
-
-
 
 module.exports = router;

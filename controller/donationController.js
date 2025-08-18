@@ -1,62 +1,73 @@
-const express = require("express");
-const router = express.Router();
-const { Donation } = require("../models/models");
+const mongoose = require("mongoose");
+const { User } = require("../models/models");
+const jwt = require("jsonwebtoken");
+const bcrypt = require("bcryptjs");
 
-// Create a new donation
-router.post("/donations", async (req, res) => {
+const registerDonor = async (req, res) => {
   try {
-    const donation = new Donation(req.body);
-    await donation.save();
-    res.status(201).json(donation);
-  } catch (error) {
-    res.status(400).json({ error: error.message });
-  }
-});
-
-// Get all donations
-router.get("/donations", async (req, res) => {
-  try {
-    const donations = await Donation.find().populate("donorId");
-    res.json(donations);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// Get a specific donation by ID
-router.get("/donations/:id", async (req, res) => {
-  try {
-    const donation = await Donation.findById(req.params.id).populate("donorId");
-    if (!donation) return res.status(404).json({ error: "Donation not found" });
-    res.json(donation);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// Update a donation
-router.put("/donations/:id", async (req, res) => {
-  try {
-    const donation = await Donation.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,
-      runValidators: true,
+    const { name, email, password, address, secretkey } = req.body;
+    if (secretkey !== process.env.SECRET_KEY) {
+      return res.status(401).json({ message: "Unauthorized account creation" });
+    }
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({ message: "Email already exists" });
+    }
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const user = new User({
+      name,
+      email,
+      password: hashedPassword,
+      address,
+      role: "donor",
+      active: true,
     });
-    if (!donation) return res.status(404).json({ error: "Donation not found" });
-    res.json(donation);
+    await user.save();
+    return res.status(201).json({ message: "User created successfully" });
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    console.error("Error in registerDonor:", error);
+    return res
+      .status(500)
+      .json({ message: "Server error during registration" });
   }
-});
+};
 
-// Delete a donation
-router.delete("/donations/:id", async (req, res) => {
+const loginDonor = async (req, res) => {
   try {
-    const donation = await Donation.findByIdAndDelete(req.params.id);
-    if (!donation) return res.status(404).json({ error: "Donation not found" });
-    res.json({ message: "Donation deleted successfully" });
+    const { email, password } = req.body;
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    if (!user.active) {
+      return res.status(400).json({ message: "User is not active" });
+    }
+    const isValidPassword = await bcrypt.compare(password, user.password);
+    if (!isValidPassword) {
+      return res.status(400).json({ message: "Invalid password" });
+    }
+    const token = jwt.sign(
+      { userId: user._id, role: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: "1h" }
+    );
+    return res.status(200).json({
+      message: "Login successful",
+      token,
+      user: {
+        name: user.name,
+        email: user.email,
+        address: user.address,
+        role: user.role,
+      },
+    });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error("Error in loginDonor:", error);
+    return res.status(500).json({ message: "Server error during login" });
   }
-});
+};
 
-module.exports = router;
+module.exports = {
+  registerDonor,
+  loginDonor,
+};
