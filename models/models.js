@@ -30,6 +30,7 @@
         type: String,
         required: true,
       },
+      photo: { type: String }, // path to the photo file
       quantity: { type: Number, required: true }, // number of items or amount
       description: { type: String }, // e.g. "5 winter jackets"
       status: {

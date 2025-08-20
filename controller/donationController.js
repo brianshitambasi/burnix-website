@@ -3,26 +3,53 @@ const { Donation, Request } = require("../models/models");
 // ========================
 // Create Donation (Donors only)
 // ========================
+const multer = require('multer');
+const fs = require('fs');
+const path = require('path');
+
+// Upload middleware (temp storage)
+const upload = multer({ dest: 'uploads/' });
+exports.uploadDonationPhoto = upload.single('photo');
+
 exports.createDonation = async (req, res) => {
   try {
-    if (req.user.role !== "donor") {
-      return res.json({ message: "Only donors can create donations" });
-    }
-
     const { type, quantity, description } = req.body;
 
-    const donation = new Donation({
-      donor: req.user.userId, // from JWT payload
+    // Ensure user is a donor
+    const user = await User.findById(req.user.userId);
+    if (!user || user.role !== 'donor') {
+      return res.status(403).json({ message: "Only donors can create donations" });
+    }
+
+    // Optional photo handling
+    let photo = null;
+    if (req.file) {
+      const ext = path.extname(req.file.originalname);
+      const newFileName = Date.now() + ext;
+      const newPath = path.join('uploads', newFileName);
+      fs.renameSync(req.file.path, newPath);
+      photo = newPath.replace(/\\/g, '/'); // Normalize path
+    }
+
+    // Create donation
+    const newDonation = new Donation({
+      donor: req.user.userId,
       type,
       quantity,
       description,
+      photo, // can be null
     });
 
-    await donation.save();
-    return res.status(201).json({ message: "Donation created successfully", donation });
+    const savedDonation = await newDonation.save();
+
+    res.status(201).json({
+      message: "Donation created successfully",
+      donation: savedDonation,
+    });
+
   } catch (error) {
-    console.error("Error in createDonation:", error);
-    return res.status(500).json({ message: "Server error while creating donation" });
+    console.error('Error creating donation:', error);
+    res.status(500).json({ message: error.message });
   }
 };
 

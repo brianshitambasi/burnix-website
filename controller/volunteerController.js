@@ -60,12 +60,7 @@ const volunteerOpportunityController = {
     try {
       const { productName, description, size, quantity } = req.body;
 
-      if (!req.file) {
-        return res.status(400).json({ error: "Product photo is required" });
-      }
-
-      const photoPath = req.file.path;
-
+   
       // Assuming req.user.userId exists from auth middleware
       const donation = new Donation({
         volunteer: req.user.userId,
