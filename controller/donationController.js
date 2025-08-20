@@ -1,4 +1,4 @@
-const { Donation, Request } = require("../models/models");
+const { Donation, Request ,User} = require("../models/models");
 
 // ========================
 // Create Donation (Donors only)
@@ -11,9 +11,14 @@ const path = require('path');
 const upload = multer({ dest: 'uploads/' });
 exports.uploadDonationPhoto = upload.single('photo');
 
+
 exports.createDonation = async (req, res) => {
+  console.log("Body received:", req.body);
+console.log("File received:", req.file);
+
   try {
     const { type, quantity, description } = req.body;
+    console.log(req.body.type)
 
     // Ensure user is a donor
     const user = await User.findById(req.user.userId);
