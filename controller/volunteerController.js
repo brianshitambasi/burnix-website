@@ -1,5 +1,7 @@
 const mongoose = require("mongoose");
-const VolunteerOpportunity = require('../models/models');
+const VolunteerOpportunity = require('../models/models').VolunteerOpportunity;
+const Donation = require('../models/models').Donation;  // Assuming Donation model is exported here
+const path = require('path');
 
 const volunteerOpportunityController = {
   async createVolunteerOpportunity(req, res) {
@@ -49,6 +51,37 @@ const volunteerOpportunityController = {
       if (!volunteerOpportunity) return res.status(404).json({ error: "Volunteer opportunity not found" });
       res.status(200).json({ message: "Volunteer opportunity deleted" });
     } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  },
+
+  // New method: Create a donation with photo upload for volunteers
+  async createVolunteerDonation(req, res) {
+    try {
+      const { productName, description, size, quantity } = req.body;
+
+      if (!req.file) {
+        return res.status(400).json({ error: "Product photo is required" });
+      }
+
+      const photoPath = req.file.path;
+
+      // Assuming req.user.userId exists from auth middleware
+      const donation = new Donation({
+        volunteer: req.user.userId,
+        productName,
+        description,
+        size,
+        quantity,
+        photo: photoPath,
+        status: "pending",
+      });
+
+      await donation.save();
+
+      res.status(201).json({ message: "Donation created successfully", donation });
+    } catch (error) {
+      console.error("Error in createVolunteerDonation:", error);
       res.status(500).json({ error: error.message });
     }
   },
