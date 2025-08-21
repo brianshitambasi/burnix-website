@@ -28,7 +28,7 @@ app.use("/donor/dash", donorDash);
 
 // request routes
 const RequestRoutes = require("./routes/requestRoutes");
-app.use("/request", RequestRoutes);
+app.use("/requests", RequestRoutes);
 
 // volunteer routes
 const VolunteerRoutes = require("./routes/volunteerRoutes");

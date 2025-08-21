@@ -1,7 +1,7 @@
-const { Request } = require("../models/models");
+const { Request, Donation } = require("../models/models");
 
 // ========================
-// Create request (only beneficiary)
+// Create request (body-based, already exists)
 // ========================
 exports.createRequest = async (req, res) => {
   try {
@@ -19,12 +19,61 @@ exports.createRequest = async (req, res) => {
       donation,
       quantity,
       notes,
-      beneficiary: req.user.userId, // ✅ enforce beneficiary from token
+      beneficiary: req.user.userId,
     });
 
     res.status(201).json(request);
   } catch (error) {
     console.error("Error creating request:", error);
+    res.status(500).json({ error: error.message });
+  }
+};
+
+// ========================
+// Create request for specific donation (button action)
+// ========================
+exports.makeRequestForDonation = async (req, res) => {
+  try {
+    if (req.user.role !== "beneficiary") {
+      return res.status(403).json({ error: "Only beneficiaries can request donations" });
+    }
+
+    const donationId = req.params.id;
+    const { quantity, notes } = req.body;
+
+    // validate donation
+    const donation = await Donation.findById(donationId);
+    if (!donation) {
+      return res.status(404).json({ error: "Donation not found" });
+    }
+    if (donation.status !== "available") {
+      return res.status(400).json({ error: "Donation is not available" });
+    }
+    if (quantity > donation.quantity) {
+      return res.status(400).json({ error: "Requested quantity exceeds available stock" });
+    }
+
+    // create request
+    const request = await Request.create({
+      donation: donationId,
+      quantity,
+      notes,
+      beneficiary: req.user.userId,
+    });
+
+    // optional: update donation if fully taken
+    if (quantity === donation.quantity) {
+      donation.status = "reserved";
+      donation.assignedTo = req.user.userId;
+      await donation.save();
+    }
+
+    res.status(201).json({
+      message: "Request successfully placed",
+      request,
+    });
+  } catch (error) {
+    console.error("Error making request:", error);
     res.status(500).json({ error: error.message });
   }
 };
@@ -65,12 +114,12 @@ exports.getRequestById = async (req, res) => {
 };
 
 // ========================
-// Update request (only owner beneficiary)
+// Update request (only owner)
 // ========================
 exports.updateRequest = async (req, res) => {
   try {
     const request = await Request.findOneAndUpdate(
-      { _id: req.params.id, beneficiary: req.user.userId }, // ✅ only owner can update
+      { _id: req.params.id, beneficiary: req.user.userId },
       req.body,
       { new: true, runValidators: true, context: "query" }
     );
@@ -87,13 +136,13 @@ exports.updateRequest = async (req, res) => {
 };
 
 // ========================
-// Delete request (only owner beneficiary)
+// Delete request (only owner)
 // ========================
 exports.deleteRequest = async (req, res) => {
   try {
     const request = await Request.findOneAndDelete({
       _id: req.params.id,
-      beneficiary: req.user.userId, // ✅ only owner can delete
+      beneficiary: req.user.userId,
     });
 
     if (!request) {
