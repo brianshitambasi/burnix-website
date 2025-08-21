@@ -1,18 +1,18 @@
 const { Request, Donation } = require("../models/models");
 
 // ========================
-// Create request (body-based, already exists)
+// Create request (body-based)
 // ========================
 exports.createRequest = async (req, res) => {
   try {
     if (req.user.role !== "beneficiary") {
-      return res.status(403).json({ error: "Only beneficiaries can create requests" });
+      return res.json({ error: "Only beneficiaries can create requests" });
     }
 
     const { donation, quantity, notes } = req.body;
 
     if (!donation || !quantity) {
-      return res.status(400).json({ error: "Donation and quantity are required" });
+      return res.json({ error: "Donation and quantity are required" });
     }
 
     const request = await Request.create({
@@ -22,7 +22,7 @@ exports.createRequest = async (req, res) => {
       beneficiary: req.user.userId,
     });
 
-    res.status(201).json(request);
+    res.json(request);
   } catch (error) {
     console.error("Error creating request:", error);
     res.status(500).json({ error: error.message });
@@ -35,25 +35,23 @@ exports.createRequest = async (req, res) => {
 exports.makeRequestForDonation = async (req, res) => {
   try {
     if (req.user.role !== "beneficiary") {
-      return res.status(403).json({ error: "Only beneficiaries can request donations" });
+      return res.json({ error: "Only beneficiaries can request donations" });
     }
 
     const donationId = req.params.id;
     const { quantity, notes } = req.body;
 
-    // validate donation
     const donation = await Donation.findById(donationId);
     if (!donation) {
-      return res.status(404).json({ error: "Donation not found" });
+      return res.json({ error: "Donation not found" });
     }
     if (donation.status !== "available") {
-      return res.status(400).json({ error: "Donation is not available" });
+      return res.json({ error: "Donation is not available" });
     }
     if (quantity > donation.quantity) {
-      return res.status(400).json({ error: "Requested quantity exceeds available stock" });
+      return res.json({ error: "Requested quantity exceeds available stock" });
     }
 
-    // create request
     const request = await Request.create({
       donation: donationId,
       quantity,
@@ -61,19 +59,18 @@ exports.makeRequestForDonation = async (req, res) => {
       beneficiary: req.user.userId,
     });
 
-    // optional: update donation if fully taken
     if (quantity === donation.quantity) {
       donation.status = "reserved";
       donation.assignedTo = req.user.userId;
       await donation.save();
     }
 
-    res.status(201).json({
+    res.json({
       message: "Request successfully placed",
       request,
     });
   } catch (error) {
-    console.error("Error making request:", error);
+    console.log("Error making request:", error);
     res.status(500).json({ error: error.message });
   }
 };
@@ -86,7 +83,8 @@ exports.getRequests = async (req, res) => {
     const requests = await Request.find()
       .populate("beneficiary", "name email role")
       .populate("donation", "type quantity description donor");
-    res.status(200).json(requests);
+
+    res.json(requests);
   } catch (error) {
     console.error("Error fetching requests:", error);
     res.status(500).json({ error: error.message });
@@ -103,10 +101,10 @@ exports.getRequestById = async (req, res) => {
       .populate("donation", "type quantity description donor");
 
     if (!request) {
-      return res.status(404).json({ error: "Request not found" });
+      return res.json({ error: "Request not found" });
     }
 
-    res.status(200).json(request);
+    res.json(request);
   } catch (error) {
     console.error("Error fetching request:", error);
     res.status(500).json({ error: error.message });
@@ -125,10 +123,10 @@ exports.updateRequest = async (req, res) => {
     );
 
     if (!request) {
-      return res.status(404).json({ error: "Request not found or not authorized" });
+      return res.json({ error: "Request not found or not authorized" });
     }
 
-    res.status(200).json(request);
+    res.json(request);
   } catch (error) {
     console.error("Error updating request:", error);
     res.status(500).json({ error: error.message });
@@ -146,7 +144,7 @@ exports.deleteRequest = async (req, res) => {
     });
 
     if (!request) {
-      return res.status(404).json({ error: "Request not found or not authorized" });
+      return res.json({ error: "Request not found or not authorized" });
     }
 
     res.json({ message: "Request deleted successfully" });
