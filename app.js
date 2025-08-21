@@ -34,6 +34,10 @@ app.use("/request", RequestRoutes);
 const VolunteerRoutes = require("./routes/volunteerRoutes");
 app.use("/volunteer", VolunteerRoutes);
 
+// beneficiary dash routes
+const beneficiaryDash= require("./routes/beneDashRoute");
+app.use("/api/beneficiaries/dash", beneficiaryDash);
+
 // beneficiary routes
 const beneficiaryRoutes = require("./routes/beneficiaryRoutes");
 app.use("/api/beneficiaries", beneficiaryRoutes);

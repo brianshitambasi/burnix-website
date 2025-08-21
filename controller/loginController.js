@@ -26,7 +26,7 @@ exports.registerUser = async (req, res) => {
       email,
       password: hashedPassword,
       address,
-      role: role || "beneficiary", // default = beneficiary
+      role: role, 
     });
 
     await user.save();

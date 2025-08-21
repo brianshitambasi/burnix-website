@@ -1,4 +1,6 @@
-const User = require("../models/models"); // adjust path if needed
+const { User } = require("../models/models"); // ✅ use destructuring
+
+
 const bcrypt = require("bcryptjs");
 
 /**
@@ -11,8 +13,10 @@ exports.createBeneficiary = async (req, res) => {
     // check if user already exists
     const existingUser = await User.findOne({ email });
     if (existingUser) {
-      return res.status(400).json({ message: "Email already in use" });
+      return res.json({ message: "Email already in use" });
     }
+    console.log(User);
+
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
@@ -27,6 +31,7 @@ exports.createBeneficiary = async (req, res) => {
     await beneficiary.save();
     res.status(201).json({ message: "Beneficiary created successfully", beneficiary });
   } catch (err) {
+    
     res.status(500).json({ message: "Server error", error: err.message });
   }
 };
@@ -53,6 +58,7 @@ exports.getBeneficiaryById = async (req, res) => {
       return res.status(404).json({ message: "Beneficiary not found" });
     }
     res.status(200).json(beneficiary);
+  
   } catch (err) {
     res.status(500).json({ message: "Server error", error: err.message });
   }
