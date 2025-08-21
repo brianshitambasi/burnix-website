@@ -34,6 +34,11 @@ app.use("/request", RequestRoutes);
 const VolunteerRoutes = require("./routes/volunteerRoutes");
 app.use("/volunteer", VolunteerRoutes);
 
+// beneficiary routes
+const beneficiaryRoutes = require("./routes/beneficiaryRoutes");
+app.use("/api/beneficiaries", beneficiaryRoutes);
+
+
 
 // connection to the database
 mongoose.connect(process.env.MONGO_URI)
