@@ -35,7 +35,7 @@ exports.createRequest = async (req, res) => {
 exports.makeRequestForDonation = async (req, res) => {
   try {
     if (req.user.role !== "beneficiary") {
-      return res.json({ error: "Only beneficiaries can request donations" });
+      return res.json({ message: "Only beneficiaries can request donations" });
     }
 
     const donationId = req.params.id;
@@ -43,13 +43,13 @@ exports.makeRequestForDonation = async (req, res) => {
 
     const donation = await Donation.findById(donationId);
     if (!donation) {
-      return res.json({ error: "Donation not found" });
+      return res.json({ message: "Donation not found" });
     }
     if (donation.status !== "available") {
-      return res.json({ error: "Donation is not available" });
+      return res.json({ message: "Donation is not available" });
     }
     if (quantity > donation.quantity) {
-      return res.json({ error: "Requested quantity exceeds available stock" });
+      return res.json({ message: "Requested quantity exceeds available stock" });
     }
 
     const request = await Request.create({
