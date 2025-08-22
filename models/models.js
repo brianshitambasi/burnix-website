@@ -29,9 +29,9 @@
         type: String,
         required: true,
       },
-      photo: { type: String }, // path to the photo file
-      quantity: { type: Number, required: true }, // number of items or amount
-      description: { type: String }, // e.g. "5 winter jackets"
+      photo: { type: String }, 
+      quantity: { type: Number, required: true }, 
+      description: { type: String }, 
       status: {
         type: String,
         enum: ["available", "reserved", "delivered"],
@@ -53,19 +53,20 @@
       ref: "Donation",
       required: true
     },
-    quantity: {
-      type: Number,
-      required: true
-    },
-    notes: {
-      type: String
-    },
+    quantity: { type: Number, required: true },
+    notes: { type: String },
     beneficiary: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true
-    }
+    },
+    status: {
+      type: String,
+      enum: ["pending", "approved", "rejected","reserved"],
+      default: "pending",
+    },
   }, { timestamps: true });
+  
 
   // ========================
   // Volunteer Task Schema (Optional)

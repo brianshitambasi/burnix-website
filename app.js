@@ -43,6 +43,9 @@ const beneficiaryRoutes = require("./routes/beneficiaryRoutes");
 app.use("/api/beneficiaries", beneficiaryRoutes);
 
 
+const donorRequests = require("./routes/donorRequestRoute");
+app.use("/api/donor/requests", donorRequests);
+
 
 // connection to the database
 mongoose.connect(process.env.MONGO_URI)

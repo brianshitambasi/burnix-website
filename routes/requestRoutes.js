@@ -9,8 +9,12 @@ router.post("/", auth, authorizeRoles("beneficiary"), requestController.createRe
 // Beneficiary makes request for a specific donation
 router.post("/:id", auth, authorizeRoles("beneficiary"), requestController.makeRequestForDonation);
 
+// Get all my requests
+router.get("/my", auth,authorizeRoles("beneficiary"),requestController.getRequests);
+
 // Get all requests
 router.get("/", requestController.getRequests);
+
 
 // Get single request
 router.get("/:id", requestController.getRequestById);

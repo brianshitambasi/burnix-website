@@ -92,6 +92,24 @@ exports.getRequests = async (req, res) => {
 };
 
 // ========================
+// Get requests for logged-in beneficiary
+// ========================
+exports.getMyRequests = async (req, res) => {
+  try {
+    // req.user.userId comes from your auth middleware
+    const requests = await Request.find({ beneficiary: req.user.userId })
+      .populate("beneficiary", "name email role")
+      .populate("donation", "type quantity description donor");
+
+    res.json(requests);
+  } catch (error) {
+    console.error("Error fetching my requests:", error);
+    res.status(500).json({ error: error.message });
+  }
+};
+
+
+// ========================
 // Get single request
 // ========================
 exports.getRequestById = async (req, res) => {
