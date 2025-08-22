@@ -22,7 +22,7 @@ exports.getDonorDashboard = async (req, res) => {
     // Assigned (matched with a beneficiary)
     const assignedDonations = await Donation.countDocuments({
       donor: donorId,
-      status: "assigned",
+      assignedTo: { $ne: null }, // means "not null"
     });
 
     // Completed (delivered successfully)

@@ -24,49 +24,71 @@ exports.getMyDonationRequests = async (req, res) => {
   };
   
 
-// ========================
+  // Approve request
 // Approve request
-// ========================
 exports.approveRequest = async (req, res) => {
-  try {
-    const request = await Request.findById(req.params.id).populate("donation");
-    if (!request) return res.status(404).json({ message: "Request not found" });
-
-    if (request.donation.donor.toString() !== req.user._id.toString()) {
-      return res.status(403).json({ message: "Not authorized" });
+    try {
+      const { id } = req.params;
+  
+      const request = await Request.findById(id).populate("donation");
+      if (!request) return res.status(404).json({ message: "Request not found" });
+      if (!request.donation) return res.status(400).json({ message: "Donation not linked to request" });
+  
+      // Only donor who owns the donation can approve
+      if (request.donation.donor?.toString() !== req.user.userId) {
+        return res.status(403).json({ message: "Not authorized to approve this request" });
+      }
+  
+      // ✅ Update request and donation
+      request.status = "approved";
+      await request.save();
+  
+      request.donation.status = "reserved";
+      request.donation.assignedTo = request.beneficiary;
+      await request.donation.save();
+  
+      res.json({
+        message: "Request approved successfully and donation assigned to beneficiary",
+        request,
+      });
+    } catch (error) {
+      console.error("❌ Approve error:", error);
+      res.status(500).json({ error: error.message });
     }
-
-    request.status = "approved";
-    await request.save();
-
-    // Optionally mark donation as reserved
-    request.donation.status = "reserved";
-    request.donation.assignedTo = request.beneficiary;
-    await request.donation.save();
-
-    res.json({ message: "Request approved", request });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-};
-
-// ========================
-// Reject request
-// ========================
-exports.rejectRequest = async (req, res) => {
-  try {
-    const request = await Request.findById(req.params.id).populate("donation");
-    if (!request) return res.status(404).json({ message: "Request not found" });
-
-    if (request.donation.donor.toString() !== req.user._id.toString()) {
-      return res.status(403).json({ message: "Not authorized" });
+  };
+  
+  // Reject request
+  exports.rejectRequest = async (req, res) => {
+    try {
+      const { id } = req.params;
+  
+      // find the request & populate donation
+      const request = await Request.findById(id).populate("donation");
+      if (!request) {
+        return res.status(404).json({ message: "Request not found" });
+      }
+  
+      // ensure donation exists
+      if (!request.donation) {
+        return res.status(400).json({ message: "Donation not linked to request" });
+      }
+  
+      // ensure donor matches logged-in user
+      if (request.donation.donor?.toString() !== req.user.userId) {
+        return res.status(403).json({ message: "Not authorized to reject this request" });
+      }
+  
+      // update status
+      request.status = "rejected";
+      await request.save();
+  
+      res.json({
+        message: "Request rejected successfully",
+        request,
+      });
+    } catch (error) {
+      console.error("❌ Reject error:", error);
+      res.status(500).json({ error: error.message });
     }
-
-    request.status = "rejected";
-    await request.save();
-
-    res.json({ message: "Request rejected", request });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-};
+  };
+  
