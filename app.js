@@ -42,6 +42,11 @@ app.use("/api/beneficiaries/dash", beneficiaryDash);
 const beneficiaryRoutes = require("./routes/beneficiaryRoutes");
 app.use("/api/beneficiaries", beneficiaryRoutes);
 
+// admin routes
+const adminRoutes = require("./routes/adminRoutes");
+app.use("/api/admin", adminRoutes);
+
+
 
 const donorRequests = require("./routes/donorRequestRoute");
 app.use("/api/donor/requests", donorRequests);

@@ -12,7 +12,7 @@
     address: { type: String, required: true },
     role: {
       type: String,
-      enum: ["donor", "volunteer", "beneficiary"],
+      enum: ["donor", "volunteer", "beneficiary", "admin"],
       required: true,
     },
     active: { type: Boolean, default: true },

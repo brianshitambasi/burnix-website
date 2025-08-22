@@ -10,7 +10,7 @@ exports.registerUser = async (req, res) => {
     const { name, email, password, address, role } = req.body;
 
     // Validate role
-    if (role && !["donor", "beneficiary", "volunteer"].includes(role)) {
+    if (role && !["donor", "beneficiary", "volunteer","admin"].includes(role)) {
       return res.json({ message: "Invalid role" });
     }
 
