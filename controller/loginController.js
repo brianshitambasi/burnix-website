@@ -9,28 +9,46 @@ exports.registerUser = async (req, res) => {
   try {
     const { name, email, password, address, role } = req.body;
 
-    // Validate role
-    if (role && !["donor", "beneficiary", "volunteer","admin"].includes(role)) {
-      return res.json({ message: "Invalid role" });
+    // Validate inputs
+    if (!name || !email || !password || !address || !role) {
+      return res.status(400).json({ message: "All fields are required" });
     }
 
+    // Validate role
+    if (!["donor", "beneficiary", "volunteer", "admin"].includes(role)) {
+      return res.status(400).json({ message: "Invalid role" });
+    }
+
+    // Check if email exists
     const existingUser = await User.findOne({ email });
     if (existingUser) {
-      return res.json({ message: "Email already exists" });
+      return res.status(400).json({ message: "Email already exists" });
     }
 
+    // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
+    // Create user
     const user = new User({
       name,
       email,
       password: hashedPassword,
       address,
-      role: role, 
+      role,
     });
 
     await user.save();
-    return res.status(201).json({ message: "User registered successfully" });
+
+    return res.status(201).json({
+      message: "User registered successfully",
+      newUser: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        address: user.address,
+        role: user.role,
+      },
+    });
   } catch (error) {
     console.error("Error in registerUser:", error);
     return res.status(500).json({ message: error.message });
@@ -43,6 +61,11 @@ exports.registerUser = async (req, res) => {
 exports.loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({ message: "Email and password are required" });
+    }
+
     const user = await User.findOne({ email });
 
     if (!user) {
@@ -51,7 +74,7 @@ exports.loginUser = async (req, res) => {
 
     const isValidPassword = await bcrypt.compare(password, user.password);
     if (!isValidPassword) {
-      return res.json({ message: "Invalid password" });
+      return res.status(400).json({ message: "Invalid password" });
     }
 
     const token = jwt.sign(
@@ -67,7 +90,7 @@ exports.loginUser = async (req, res) => {
         id: user._id,
         name: user.name,
         email: user.email,
-        address: user.address,  
+        address: user.address,
         role: user.role,
       },
     });

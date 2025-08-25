@@ -1,20 +1,30 @@
 const { User, Donation, Request, VolunteerTask } = require("../models/models");
 
-// Get dashboard data statistics for admin
+// Get dashboard data + all activities for admin
 exports.adminDashStats = async (req, res) => {
   try {
-    // count stats
-    const [totalDonors, totalVolunteers, totalBeneficiaries, totalRequests, totalDonations, activeUsers] =
-      await Promise.all([
-        User.countDocuments({ role: "donor" }),
-        User.countDocuments({ role: "volunteer" }),
-        User.countDocuments({ role: "beneficiary" }),
-        Request.countDocuments(),
-        Donation.countDocuments(),
-        User.countDocuments({ active: true }),
-      ]);
+    // ========================
+    // STATISTICS
+    // ========================
+    const [
+      totalDonors,
+      totalVolunteers,
+      totalBeneficiaries,
+      totalRequests,
+      totalDonations,
+      activeUsers,
+    ] = await Promise.all([
+      User.countDocuments({ role: "donor" }),
+      User.countDocuments({ role: "volunteer" }),
+      User.countDocuments({ role: "beneficiary" }),
+      Request.countDocuments(),
+      Donation.countDocuments(),
+      User.countDocuments({ active: true }),
+    ]);
 
-    // recent records
+    // ========================
+    // RECENT RECORDS
+    // ========================
     const recentDonors = await User.find({ role: "donor" })
       .sort({ createdAt: -1 })
       .limit(5)
@@ -39,9 +49,44 @@ exports.adminDashStats = async (req, res) => {
     const recentDonations = await Donation.find({})
       .sort({ createdAt: -1 })
       .limit(5)
-      .populate("donor", "name email");
+      .populate("donor", "name email")
+      .populate("assignedTo", "name email")
+      .populate("handledBy", "name email");
 
-    // return response
+    const recentVolunteerTasks = await VolunteerTask.find({})
+      .sort({ createdAt: -1 })
+      .limit(5)
+      .populate("volunteer", "name email")
+      .populate("donation", "type status")
+      .populate("request", "status");
+
+    // ========================
+    // FULL ACTIVITIES (tables)
+    // ========================
+    const allUsers = await User.find({})
+      .sort({ createdAt: -1 })
+      .select("name email role address active createdAt");
+
+    const allDonations = await Donation.find({})
+      .sort({ createdAt: -1 })
+      .populate("donor", "name email")
+      .populate("assignedTo", "name email")
+      .populate("handledBy", "name email");
+
+    const allRequests = await Request.find({})
+      .sort({ createdAt: -1 })
+      .populate("beneficiary", "name email")
+      .populate("donation", "type status");
+
+    const allVolunteerTasks = await VolunteerTask.find({})
+      .sort({ createdAt: -1 })
+      .populate("volunteer", "name email")
+      .populate("donation", "type status")
+      .populate("request", "status");
+
+    // ========================
+    // RESPONSE
+    // ========================
     res.status(200).json({
       stats: {
         totalDonors,
@@ -57,6 +102,13 @@ exports.adminDashStats = async (req, res) => {
         beneficiaries: recentBeneficiaries,
         requests: recentRequests,
         donations: recentDonations,
+        volunteerTasks: recentVolunteerTasks,
+      },
+      tables: {
+        users: allUsers,
+        donations: allDonations,
+        requests: allRequests,
+        volunteerTasks: allVolunteerTasks,
       },
     });
   } catch (error) {
