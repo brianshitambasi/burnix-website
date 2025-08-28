@@ -2,20 +2,24 @@ const { User } = require("../models/models");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 
-// ========================
+/// ========================
 // Register User
 // ========================
 exports.registerUser = async (req, res) => {
   try {
-    const { name, email, password, address, role } = req.body;
+    let { name, email, password, address, role } = req.body;
 
     // Validate inputs
     if (!name || !email || !password || !address || !role) {
       return res.status(400).json({ message: "All fields are required" });
     }
 
+    // Normalize role (make it case-insensitive)
+    role = role.toLowerCase();
+
     // Validate role
-    if (!["donor", "beneficiary", "volunteer", "admin"].includes(role)) {
+    const validRoles = ["donor", "beneficiary", "volunteer", "admin"];
+    if (!validRoles.includes(role)) {
       return res.status(400).json({ message: "Invalid role" });
     }
 
