@@ -11,7 +11,7 @@ exports.registerUser = async (req, res) => {
 
     // Validate inputs
     if (!name || !email || !password || !address || !role) {
-      return res.status(400).json({ message: "All fields are required" });
+      return res.json({ message: "All fields are required" });
     }
 
     // Normalize role (make it case-insensitive)
@@ -20,7 +20,7 @@ exports.registerUser = async (req, res) => {
     // Validate role
     const validRoles = ["donor", "beneficiary", "volunteer", "admin"];
     if (!validRoles.includes(role)) {
-      return res.status(400).json({ message: "Invalid role" });
+      return res.json({ message: "Invalid role" });
     }
 
     // Check if email exists
